@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import json
 
 from dotenv import load_dotenv
 from google import genai
@@ -45,28 +46,46 @@ def main():
             schema_write_file,
         ]
     )
-    response = client.models.generate_content(
-        model='gemini-2.0-flash-001',
-        contents=messages,
-        config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt)
-    )
-    if (is_verbose):
-        print(f"User prompt: {prompt}")
-    print(f"Response: {response.text}")
-    for function_call_part in response.function_calls:
-        #print(f"Calling function: {function_call_part.name}({function_call_part.args})")
-        func_response = call_function(function_call_part, is_verbose)
-        
-        if len(func_response.parts) == 0 or not func_response.parts[0].function_response or not func_response.parts[0].function_response.response:
-            raise Exception("Response invalid")
-        
-        if is_verbose:
-            print(f"-> {func_response.parts[0].function_response.response}")
 
+    for i in range(20):
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.0-flash-001',
+                contents=messages,
+                config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt)
+            )
 
-    if (is_verbose):
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+            for candidate in response.candidates:
+                messages.append(candidate.content)
+
+            if (is_verbose):
+                print(f"User prompt: {prompt}")
+            #print(f"Response: {response.text}")
+            if response.function_calls:
+                for function_call_part in response.function_calls:
+                    func_response = call_function(function_call_part, is_verbose)
+                    
+                    if len(func_response.parts) == 0 or not func_response.parts[0].function_response or not func_response.parts[0].function_response.response:
+                        raise Exception("Response invalid")
+                    
+                    messages.append(
+                        types.Content(role="user", parts=[types.Part(text=json.dumps(func_response.parts[0].function_response.response))]),
+                    )
+                    
+                    if is_verbose:
+                        print(f"-> {func_response.parts[0].function_response.response}")
+
+            if not response.function_calls and response.text:
+               print('Final response:')
+               print(response.text)
+               break
+
+            if (is_verbose):
+                print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+                print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+        except Exception as e:
+            print("Error: " + str(e))
+            break
 
     sys.exit(0)
 
