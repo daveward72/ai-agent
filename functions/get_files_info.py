@@ -42,3 +42,57 @@ schema_get_files_info = types.FunctionDeclaration(
         },
     ),
 )
+
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Gets the string content from a file, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description='The path to the file, relative to the working directory.'   
+            )
+        }
+    )
+)
+
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Executes a Python file with optional arguments constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description='The path to the Python file, relative to the working directory.'   
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                description='Optional array of command line arguments for the Python program.',
+                items=types.Schema(
+                    type=types.Type.STRING,
+                    description='A single string command line argument.'
+                )
+            )
+        }
+    )
+)
+
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Writes or overwrites a file, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description='The file path to write.'   
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description='The string content to write to the file.',
+            )
+        }
+    )
+)
