@@ -60,7 +60,7 @@ def main():
 
             if (is_verbose):
                 print(f"User prompt: {prompt}")
-            #print(f"Response: {response.text}")
+
             if response.function_calls:
                 for function_call_part in response.function_calls:
                     func_response = call_function(function_call_part, is_verbose)
